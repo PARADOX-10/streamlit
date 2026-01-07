@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 import math
 
 # Налаштування інтерфейсу
-st.set_page_config(page_title="Magelan242 Ballistics v14.0", layout="wide")
+st.set_page_config(page_title="Балістичний калькулятор Magelan242 v14.0", layout="wide")
 
 # --- МАТЕМАТИЧНЕ ЯДРО ---
 def run_simulation(p):
