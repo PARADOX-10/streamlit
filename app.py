@@ -5,94 +5,142 @@ import plotly.graph_objects as go
 import math
 
 # Налаштування сторінки
-st.set_page_config(page_title="Magelan242 Ballistic", layout="wide")
+st.set_page_config(page_title="Ballistic Expert Pro v3.0", layout="wide")
 
-# Стилізація інтерфейсу
-st.markdown("""
-    <style>
-    .main { background-color: #0e1117; }
-    div[data-testid="stMetricValue"] { font-size: 24px; color: #00ff00; }
-    </style>
-    """, unsafe_allow_html=True)
+# --- БАЗА ДАНИХ НАБОЇВ ---
+AMMO_DB = {
+    "Custom (Ручне введення)": {"v0": 800, "bc": 0.450, "model": "G1", "weight": 10.0},
+    ".223 Rem (55 gr FMJ)": {"v0": 980, "bc": 0.243, "model": "G1", "weight": 3.56},
+    ".308 Win (168 gr BTHP)": {"v0": 820, "bc": 0.450, "model": "G1", "weight": 10.89},
+    ".308 Win (175 gr SMK G7)": {"v0": 790, "bc": 0.243, "model": "G7", "weight": 11.34},
+    ".300 Win Mag (190 gr)": {"v0": 890, "bc": 0.530, "model": "G1", "weight": 12.31},
+    ".338 Lapua Mag (250 gr)": {"v0": 900, "bc": 0.625, "model": "G1", "weight": 16.20},
+    "6.5 Creedmoor (140 gr ELD)": {"v0": 825, "bc": 0.326, "model": "G7", "weight": 9.07},
+    "7.62x39 (123 gr FMJ)": {"v0": 715, "bc": 0.275, "model": "G1", "weight": 8.0},
+    ".50 BMG (655 gr)": {"v0": 920, "bc": 0.700, "model": "G1", "weight": 42.44}
+}
 
-st.title("🎯 Magelan242 Ballistic")
-st.write("Професійний розрахунок траєкторії та поправок")
+# --- МАТЕМАТИЧНІ ФУНКЦІЇ ---
+def get_air_density(temp, pressure, humidity):
+    tk = temp + 273.15
+    p_pa = pressure * 100
+    # Спрощений облік вологості через щільність
+    rho = p_pa / (287.05 * tk) * (1 - 0.378 * (humidity/100 * 6.112 * math.exp(17.62*temp/(243.12+temp))/pressure))
+    return rho
 
-# --- БОКОВА ПАНЕЛЬ (Введення даних) ---
-st.sidebar.header("⚙️ Параметри зброї та набою")
+def run_simulation(params):
+    v0 = params['v0'] + (params['temp'] - 15) * params['t_coeff'] # Термозалежність
+    rho = get_air_density(params['temp'], params['pressure'], params['humidity'])
+    
+    # Базовий коефіцієнт опору
+    k_drag = 0.5 * rho * (1/params['bc']) * 0.00052
+    if params['model'] == "G7": k_drag *= 0.91 # Корекція форми
 
-v0 = st.sidebar.number_input("Швидкість кулі (v0), м/с", value=820, step=5)
-bc = st.sidebar.slider("Балістичний коефіцієнт (G1)", 0.100, 1.000, 0.450, format="%.3f")
-sh = st.sidebar.number_input("Висота прицілу, см", value=5.0, step=0.5)
-twist = st.sidebar.number_input("Твіст ствола, дюйми", value=10.0, step=0.5)
-
-st.sidebar.header("🌍 Умови та ціль")
-target_dist = st.sidebar.slider("Дистанція до цілі, м", 50, 1500, 500, step=50)
-zero_dist = st.sidebar.number_input("Дистанція пристрілки, м", value=100)
-angle = st.sidebar.slider("Кут нахилу, °", -45, 45, 0)
-
-st.sidebar.header("💨 Вітер")
-w_speed = st.sidebar.number_input("Швидкість вітру, м/с", value=0.0, step=0.5)
-w_dir = st.sidebar.selectbox("Напрямок вітру (год)", list(range(1, 13)), index=2)
-
-# --- ЛОГІКА РОЗРАХУНКУ ---
-def calculate_ballistics(d):
+    results = []
     g = 9.80665
-    angle_rad = math.radians(angle)
-    k = 0.00015 / bc
+    angle_rad = math.radians(params['angle'])
     
-    # Ефективна дистанція
-    eff_d = d * math.cos(angle_rad)
-    
-    # Час польоту
-    t = d / (v0 * math.exp(-k * d/2)) if d > 0 else 0
-    
-    # Падіння
-    drop = 0.5 * g * (t**2)
-    t_zero = zero_dist / (v0 * math.exp(-k * zero_dist/2))
-    drop_zero = 0.5 * g * (t_zero**2)
-    
-    y_m = -(drop - (drop_zero + sh/100) * (d / zero_dist) + sh/100) if d > 0 else 0
-    
-    # Вітер
-    wind_rad = math.radians(w_dir * 30)
-    wind_drift = (w_speed * math.sin(wind_rad)) * (t - (d/v0)) if d > 0 else 0
-    
-    # Деривація
-    derivation = 0.05 * (twist / 10) * (d / 100)**2 if d > 0 else 0
-    
-    # Поправки
-    mrad = (y_m * 100) / (d / 10) if d > 0 else 0
-    moa = mrad * 3.438
-    
-    return y_m * 100, mrad, moa, wind_drift * 100, derivation
+    for d in range(0, params['max_dist'] + 1, 10):
+        # Час польоту (ітеративно для точності)
+        t = d / (v0 * math.exp(-k_drag * d / 2)) if d > 0 else 0
+        
+        # Падіння (вертикаль)
+        drop = 0.5 * g * (t**2) * math.cos(angle_rad)
+        t_zero = params['zero_dist'] / (v0 * math.exp(-k_drag * params['zero_dist'] / 2))
+        drop_zero = 0.5 * g * (t_zero**2)
+        
+        y_m = -(drop - (drop_zero + params['sh']/100) * (d / params['zero_dist']) + params['sh']/100)
+        
+        # Вітер
+        wind_rad = math.radians(params['w_dir'] * 30)
+        wind_drift = (params['w_speed'] * math.sin(wind_rad)) * (t - (d/v0)) if d > 0 else 0
+        
+        # Деривація
+        derivation = 0.05 * (params['twist'] / 10) * (d / 100)**2 if d > 0 else 0
+        
+        # Швидкість та Енергія
+        v_current = v0 * math.exp(-k_drag * d)
+        energy = (params['weight'] / 1000 * v_current**2) / 2
+        
+        mrad = (y_m * 100) / (d / 10) if d > 0 else 0
+        moa = mrad * 3.438
+        
+        results.append({
+            "Дистанція (м)": d,
+            "Падіння (см)": round(y_m * 100, 1),
+            "MRAD": round(mrad, 2),
+            "MOA": round(moa, 2),
+            "Вітер (см)": round((wind_drift + derivation) * 100, 1),
+            "Швидкість (м/с)": round(v_current, 1),
+            "Енергія (Дж)": int(energy)
+        })
+    return pd.DataFrame(results), v0
 
-# Розрахунок для поточної цілі
-res_drop, res_mrad, res_moa, res_wind, res_der = calculate_ballistics(target_dist)
+# --- СТРУКТУРА ІНТЕРФЕЙСУ ---
+st.sidebar.title("🛠️ Налаштування")
 
-# --- ОСНОВНИЙ ЕКРАН (Результати) ---
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Вертикаль (см)", f"{res_drop:.1f}")
-col2.metric("Поправка MRAD", f"{abs(res_mrad):.2f}")
-col3.metric("Поправка MOA", f"{abs(res_moa):.2f}")
-col4.metric("Вітер/Дер. (см)", f"{res_wind + res_der:.1f}")
+with st.sidebar.expander("📦 Вибір набою", expanded=True):
+    ammo_choice = st.selectbox("Пресет", list(AMMO_DB.keys()))
+    data = AMMO_DB[ammo_choice]
+    
+    v0_in = st.number_input("V0 (м/с)", value=data['v0'])
+    bc_in = st.number_input("BC", value=data['bc'], format="%.3f")
+    model_in = st.selectbox("Модель", ["G1", "G7"], index=0 if data['model']=="G1" else 1)
+    weight_in = st.number_input("Вага кулі (г)", value=data['weight'])
+    t_coeff = st.slider("Термозалежність (м/с на °C)", 0.0, 1.0, 0.2)
 
-# --- ГРАФІК ---
-distances = np.arange(0, target_dist + 50, 10)
-drops = [calculate_ballistics(d)[0] for d in distances]
+with st.sidebar.expander("🌍 Атмосфера та Стрільба"):
+    temp = st.slider("Температура (°C)", -20, 45, 15)
+    pressure = st.number_input("Тиск (hPa)", value=1013)
+    humidity = st.slider("Вологість (%)", 0, 100, 50)
+    angle = st.slider("Кут нахилу (°)", -45, 45, 0)
+    twist = st.number_input("Твіст (дюйми)", value=10.0)
 
+with st.sidebar.expander("💨 Вітер"):
+    w_speed = st.number_input("Швидкість (м/с)", value=0.0)
+    w_dir = st.selectbox("Напрямок (год)", list(range(1, 13)), index=2)
+
+with st.sidebar.expander("🎯 Дистанція"):
+    zero_dist = st.number_input("Пристрілка (м)", value=100)
+    max_dist = st.slider("Макс. дистанція (м)", 100, 1500, 800, step=50)
+    sh = st.number_input("Висота прицілу (см)", value=5.0)
+
+# Розрахунок
+params = {
+    'v0': v0_in, 'bc': bc_in, 'model': model_in, 'weight': weight_in,
+    'temp': temp, 'pressure': pressure, 'humidity': humidity,
+    'angle': angle, 'twist': twist, 'w_speed': w_speed, 'w_dir': w_dir,
+    'zero_dist': zero_dist, 'max_dist': max_dist, 'sh': sh, 't_coeff': t_coeff
+}
+
+df, real_v0 = run_simulation(params)
+
+# --- ВІЗУАЛІЗАЦІЯ ---
+st.title("🏹 Ballistic Expert Pro v3.0")
+
+# Верхні показники для обраної дистанції (макс)
+last_row = df.iloc[-1]
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Поправка MRAD", abs(last_row['MRAD']))
+c2.metric("Поправка MOA", abs(last_row['MOA']))
+c3.metric("Швидкість у цілі", f"{last_row['Швидкість (м/с)']} м/с")
+c4.metric("Енергія", f"{last_row['Енергія (Дж)']} Дж")
+
+# Графік
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=distances, y=drops, mode='lines', name='Траєкторія', line=dict(color='#00ff00', width=3)))
+fig.add_trace(go.Scatter(x=df['Дистанція (м)'], y=df['Падіння (см)'], 
+                         name="Траєкторія", line=dict(color='#00ff00', width=3),
+                         hovertemplate="Дист: %{x}м<br>Падіння: %{y}см"))
 fig.add_hline(y=0, line_dash="dash", line_color="red")
-fig.update_layout(title="Графік польоту кулі", template="plotly_dark", xaxis_title="Відстань (м)", yaxis_title="Висота (см)")
+fig.update_layout(template="plotly_dark", height=400, margin=dict(l=20, r=20, t=40, b=20),
+                  xaxis_title="Дистанція (м)", yaxis_title="Падіння (см)")
 st.plotly_chart(fig, use_container_width=True)
 
-# --- ТАБЛИЦЯ ПОПРАВОК ---
-st.subheader("📋 Таблиця поправок (Картка вогню)")
-table_data = []
-for d in range(100, target_dist + 100, 100):
-    d_drop, d_mrad, d_moa, d_wind, d_der = calculate_ballistics(d)
-    table_data.append([d, round(d_drop, 1), round(d_mrad, 2), round(d_moa, 2), round(d_wind + d_der, 1)])
+# Картка вогню
+st.subheader("📋 Картка вогню (Крок 100м)")
+show_df = df[df['Дистанція (м)'] % 100 == 0].copy()
+st.dataframe(show_df, use_container_width=True, hide_index=True)
 
-df = pd.DataFrame(table_data, columns=["Дистанція (м)", "Падіння (см)", "MRAD", "MOA", "Вітер+Дер (см)"])
-st.table(df)
+# Попередження про звук
+if last_row['Швидкість (м/с)'] < 340:
+    st.warning(f"⚠️ На дистанції {max_dist}м куля перейшла у дозвуковий режим ({last_row['Швидкість (м/с)']} м/с). Точність може бути нестабільною.")
