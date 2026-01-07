@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import math
 
 # Налаштування сторінки
-st.set_page_config(page_title="Ballistic Expert Pro", layout="wide")
+st.set_page_config(page_title="Magelan242 Ballistic", layout="wide")
 
 # Стилізація інтерфейсу
 st.markdown("""
