@@ -60,7 +60,7 @@ def run_simulation(p):
 
 # --- БОКОВЕ МЕНЮ ---
 st.sidebar.title("🛡️ Magelan242 Ballistics")
-st.sidebar.info("Режим наддалекої стрільби (ELR)")
+st.sidebar.info("Режим тестування")
 
 tab_ammo, tab_rifle, tab_env = st.sidebar.tabs(["🚀 Набій", "🔭 Зброя", "🌍 Умови"])
 
