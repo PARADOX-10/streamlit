@@ -15,7 +15,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🎯 Ballistic Expert Pro")
+st.title("🎯 Magelan242 Ballistic")
 st.write("Професійний розрахунок траєкторії та поправок")
 
 # --- БОКОВА ПАНЕЛЬ (Введення даних) ---
