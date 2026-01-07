@@ -27,7 +27,7 @@ sh = st.sidebar.number_input("Висота прицілу, см", value=5.0, ste
 twist = st.sidebar.number_input("Твіст ствола, дюйми", value=11.0, step=0.5)
 
 st.sidebar.header("🌍 Умови та ціль")
-target_dist = st.sidebar.slider("Дистанція до цілі, м", 50, 1500, 500, step=50)
+target_dist = st.sidebar.slider("Дистанція до цілі, м", 50, 1500, 900, step=1)
 zero_dist = st.sidebar.number_input("Дистанція пристрілки, м", value=300)
 angle = st.sidebar.slider("Кут нахилу, °", -45, 45, 0)
 
