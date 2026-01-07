@@ -59,29 +59,29 @@ st.sidebar.title("🛡️ Magelan242 Ballistics")
 tab_ammo, tab_rifle, tab_env = st.sidebar.tabs(["🚀 Набій", "🔭 Зброя", "🌍 Умови"])
 
 with tab_ammo:
-    v0 = st.number_input("Початкова швидкість V0 (м/с)", 200.0, 1500.0, 825.0)
-    weight = st.number_input("Вага кулі (гран)", 1.0, 800.0, 168.0)
+    v0 = st.number_input("Початкова швидкість V0 (м/с)", 200.0, 1500.0, 893.0)
+    weight = st.number_input("Вага кулі (гран)", 1.0, 800.0, 195.0)
     
     # Розрахунок енергії
     weight_kg_calc = weight * 0.0000647989
     theoretical_energy = int((weight_kg_calc * v0**2) / 2)
     input_energy = st.number_input("Енергія набою (Дж)", value=theoretical_energy)
     
-    bc = st.number_input("Бал. коефіцієнт (BC)", 0.01, 1.5, 0.450, format="%.3f")
+    bc = st.number_input("Бал. коефіцієнт (BC)", 0.01, 1.5, 0.584, format="%.3f")
     model = st.selectbox("Модель опору", ["G1", "G7"])
     t_coeff = st.number_input("Термозалежність (м/с на 1°C)", 0.0, 2.0, 0.2)
 
 with tab_rifle:
     sh = st.number_input("Висота прицілу (см)", 0.0, 15.0, 5.0)
-    zero_dist = st.number_input("Пристрілка (м)", 1, 1000, 100)
-    twist = st.number_input("Твіст ствола (дюйми)", 5.0, 20.0, 10.0)
+    zero_dist = st.number_input("Пристрілка (м)", 1, 1000, 300)
+    twist = st.number_input("Твіст ствола (дюйми)", 5.0, 20.0, 11.0)
     click_val = st.number_input("Ціна кліка (MRAD)", 0.01, 1.0, 0.1)
 
 with tab_env:
     temp = st.slider("Температура (°C)", -35, 50, 15)
     press = st.number_input("Тиск (hPa)", 800, 1100, 1013)
-    w_speed = st.slider("Швидкість вітру (м/с)", 0.0, 20.0, 3.0)
-    w_dir = st.slider("Напрямок (год)", 1, 12, 3)
+    w_speed = st.slider("Швидкість вітру (м/с)", 0.0, 20.0, 0.0)
+    w_dir = st.slider("Напрямок (год)", 1, 12, 12)
     angle = st.slider("Кут стрільби (°)", -60, 60, 0)
     max_d = st.slider("Макс. дистанція (м)", 100, 2000, 1000, 100)
 
@@ -94,7 +94,7 @@ try:
     df, v0_final = run_simulation(params)
 
     # --- ІНТЕРФЕЙС ---
-    st.header("🎯 Аналітичний центр Magelan242")
+    st.header("🎯 Балістичний калькулятор Magelan242 v14.0")
 
     c1, c2, c3, c4 = st.columns(4)
     res = df.iloc[-1]
