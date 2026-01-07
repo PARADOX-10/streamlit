@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import math
 
-st.set_page_config(page_title="Ballistic Command Center v12.0", layout="wide")
+st.set_page_config(page_title="Magelan242 Ballistic v12.0", layout="wide")
 
 # --- РОЗШИРЕНЕ МАТЕМАТИЧНЕ ЯДРО ---
 def run_simulation(p):
@@ -55,10 +55,10 @@ st.sidebar.title("🎮 Центр керування")
 
 # Створюємо 4 основні секції
 with st.sidebar.expander("🚀 ПАРАМЕТРИ НАБОЮ", expanded=True):
-    v0 = st.number_input("Початкова швидкість V0 (м/с)", 200.0, 1500.0, 820.0)
-    bc = st.number_input("Балістичний коефіцієнт (BC)", 0.01, 2.0, 0.450, format="%.3f")
+    v0 = st.number_input("Початкова швидкість V0 (м/с)", 200.0, 1500.0, 893.0)
+    bc = st.number_input("Балістичний коефіцієнт (BC)", 0.01, 2.0, 0.584, format="%.3f")
     model = st.selectbox("Модель опору", ["G1", "G7"])
-    weight = st.number_input("Вага кулі (gr/грани)", 1.0, 1000.0, 168.0)
+    weight = st.number_input("Вага кулі (gr/грани)", 1.0, 1000.0, 195.0)
     t_coeff = st.number_input("Термозалежність (м/с на 1°C)", 0.0, 5.0, 0.2)
 
 with st.sidebar.expander("🔭 ПАРАМЕТРИ ЗБРОЇ"):
@@ -74,8 +74,8 @@ with st.sidebar.expander("🌍 СЕРЕДОВИЩЕ"):
     angle = st.slider("Кут місця цілі (°)", -60, 60, 0)
 
 with st.sidebar.expander("🌬️ ВІТЕР"):
-    w_speed = st.slider("Швидкість вітру (м/с)", 0.0, 25.0, 3.0)
-    w_dir = st.slider("Напрямок вітру (год)", 1, 12, 3)
+    w_speed = st.slider("Швидкість вітру (м/с)", 0.0, 25.0, 0.0)
+    w_dir = st.slider("Напрямок вітру (год)", 1, 12, 12)
     max_dist = st.slider("Макс. дистанція розрахунку (м)", 100, 2500, 1000, 100)
 
 # Розрахунок
@@ -86,7 +86,7 @@ p = {'v0': v0, 'bc': bc, 'model': model, 'weight_gr': weight, 'temp': temp,
 df, v0_final = run_simulation(p)
 
 # --- ОСНОВНИЙ ІНТЕРФЕЙС ---
-st.title("🏹 Ballistic Command Center v12.0")
+st.title("🏹 Magelan242 Ballistic v12.0")
 
 # Картки швидкого доступу
 c1, c2, c3, c4 = st.columns(4)
