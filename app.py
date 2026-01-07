@@ -64,7 +64,7 @@ with st.sidebar.expander("🚀 ПАРАМЕТРИ НАБОЮ", expanded=True):
 with st.sidebar.expander("🔭 ПАРАМЕТРИ ЗБРОЇ"):
     sh = st.number_input("Висота прицілу (см)", 0.0, 20.0, 5.0)
     zero_dist = st.number_input("Дистанція пристрілки (м)", 1, 1000, 100)
-    twist = st.number_input("Твіст ствола (дюйми)", 5.0, 20.0, 10.0)
+    twist = st.number_input("Твіст ствола (дюйми)", 5.0, 20.0, 11.0)
     click_val = st.number_input("Ціна кліка (MRAD)", 0.01, 1.0, 0.1)
 
 with st.sidebar.expander("🌍 СЕРЕДОВИЩЕ"):
@@ -92,7 +92,7 @@ st.title("🏹 Magelan242 Ballistic v12.0")
 c1, c2, c3, c4 = st.columns(4)
 res = df.iloc[-1]
 c1.metric("V0 (Коригована)", f"{v0_final:.1f} м/с")
-c2.metric("Вертикаль (MRAD)", round(abs(res['MRAD_V']), 2))
+c2.metric("Вертикаль (MRAD)", round(abs(res['Вертикаль (MRAD)']), 2))
 c3.metric("Горизонталь (MRAD)", round(abs(res['MRAD_H']), 2))
 c4.metric("Кліки (Вертикаль)", int(abs(res['MRAD_V'] / click_val)))
 
