@@ -43,7 +43,7 @@ def run_simulation(p):
         energy = (weight_kg * v_curr**2) / 2
         
         results.append({
-            "Range": d, "Drop_cm": y_m * 100, "Wind_cm": wind_drift * 100,
+            "Дистанція": d, "Drop_cm": y_m * 100, "Wind_cm": wind_drift * 100,
             "Deriv_cm": derivation * 100, "V": v_curr, "E": energy,
             "MRAD_V": (y_m * 100) / (d / 10) if d > 0 else 0,
             "MRAD_H": ((wind_drift + derivation) * 100) / (d / 10) if d > 0 else 0
