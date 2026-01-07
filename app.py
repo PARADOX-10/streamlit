@@ -83,7 +83,7 @@ with tab_env:
     w_speed = st.slider("Швидкість вітру (м/с)", 0.0, 20.0, 0.0)
     w_dir = st.slider("Напрямок (год)", 1, 12, 12)
     angle = st.slider("Кут стрільби (°)", -60, 60, 0)
-    max_d = st.slider("Макс. дистанція (м)", 100, 2000, 1000, 100)
+    max_d = st.slider("Макс. дистанція (м)", 100, 2000, 1000, 1)
 
 # Розрахунок
 params = {'v0': v0, 'bc': bc, 'model': model, 'weight_gr': weight, 'temp': temp, 
