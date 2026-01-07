@@ -86,7 +86,7 @@ p = {'v0': v0, 'bc': bc, 'model': model, 'weight_gr': weight, 'temp': temp,
 df, v0_final = run_simulation(p)
 
 # --- ОСНОВНИЙ ІНТЕРФЕЙС ---
-st.title("🏹 Magelan242 Ballistic v12.0")
+st.title("🏹🚀 Magelan242 Ballistic v12.0")
 
 # Картки швидкого доступу
 c1, c2, c3, c4 = st.columns(4)
