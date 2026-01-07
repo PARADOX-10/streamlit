@@ -92,7 +92,7 @@ st.title("🏹 Magelan242 Ballistic v12.0")
 c1, c2, c3, c4 = st.columns(4)
 res = df.iloc[-1]
 c1.metric("V0 (Коригована)", f"{v0_final:.1f} м/с")
-c2.metric("Вертикаль (MRAD)", round(abs(res['Вертикаль (MRAD)']), 2))
+c2.metric("Вертикаль (MRAD)", round(abs(res['MRAD_V']), 2))
 c3.metric("Горизонталь (MRAD)", round(abs(res['MRAD_H']), 2))
 c4.metric("Кліки (Вертикаль)", int(abs(res['MRAD_V'] / click_val)))
 
