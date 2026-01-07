@@ -28,7 +28,7 @@ twist = st.sidebar.number_input("Твіст ствола, дюйми", value=11.
 
 st.sidebar.header("🌍 Умови та ціль")
 target_dist = st.sidebar.slider("Дистанція до цілі, м", 50, 1500, 500, step=50)
-zero_dist = st.sidebar.number_input("Дистанція пристрілки, м", value=100)
+zero_dist = st.sidebar.number_input("Дистанція пристрілки, м", value=300)
 angle = st.sidebar.slider("Кут нахилу, °", -45, 45, 0)
 
 st.sidebar.header("💨 Вітер")
