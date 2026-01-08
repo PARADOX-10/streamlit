@@ -65,7 +65,7 @@ st.sidebar.info("Режим тестування")
 tab_ammo, tab_rifle, tab_env = st.sidebar.tabs(["🚀 Набій", "🔭 Зброя", "🌍 Умови"])
 
 with tab_ammo:
-    v0 = st.number_input("V0 (м/с)", 200.0, 1500.0, 961.0, step=1.0)
+    v0 = st.number_input("Початкова швидкість (м/с)", 200.0, 1500.0, 961.0, step=1.0)
     weight = st.number_input("Вага кулі (гран)", 1.0, 1000.0, 200.0)
     input_energy = st.number_input("Енергія набою (Дж)", value=int((weight * 0.0000647989 * v0**2) / 2))
     bc = st.number_input("Бал. коефіцієнт (BC)", 0.01, 2.0, 0.395, format="%.3f")
