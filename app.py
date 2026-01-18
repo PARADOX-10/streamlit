@@ -5,19 +5,27 @@ import plotly.graph_objects as go
 import math
 
 # --- 1. КОНФІГУРАЦІЯ ---
-st.set_page_config(page_title="Magelan242 Ballistics PRO", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Magelan242 Ballistics V6.5 Litz", layout="centered", initial_sidebar_state="collapsed")
 
-# --- 2. БАЗА ДАНИХ КУЛЬ (UPDATED) ---
+# --- 2. БАЗА ДАНИХ КУЛЬ (РОЗШИРЕНА З ДОВЖИНОЮ) ---
 # Format: [Caliber(in), Weight(gr), BC G7, Length(mm), Model]
+# Довжини (Length) взяті з каталогів виробників (орієнтовні)
 BULLET_DB = {
     "Custom (Ручне введення)": None,
+    # .224
     ".224 Sierra TMK 77gr": [0.224, 77, 0.203, 24.8, "G7"],
     ".224 Hornady ELD-M 75gr": [0.224, 75, 0.235, 25.1, "G7"],
+    
+    # 6mm
     ".243 Hornady ELD-M 108gr": [0.243, 108, 0.270, 31.2, "G7"],
+    
+    # 6.5mm
     ".264 Hornady ELD-M 140gr": [0.264, 140, 0.326, 34.5, "G7"],
     ".264 Hornady ELD-M 147gr": [0.264, 147, 0.351, 35.8, "G7"],
     ".264 Lapua Scenar-L 136gr": [0.264, 136, 0.274, 33.5, "G7"],
     ".264 Berger Hybrid 140gr": [0.264, 140, 0.311, 34.3, "G7"],
+    
+    # .308
     ".308 Lapua Scenar 167gr": [0.308, 167, 0.216, 31.5, "G7"],
     ".308 Sierra MK 175gr": [0.308, 175, 0.243, 31.8, "G7"],
     ".308 Hornady ELD-M 178gr": [0.308, 178, 0.275, 32.8, "G7"],
@@ -26,9 +34,13 @@ BULLET_DB = {
     ".308 Berger Hybrid 215gr": [0.308, 215, 0.354, 38.6, "G7"],
     ".308 Hornady A-Tip 230gr": [0.308, 230, 0.414, 41.5, "G7"],
     ".308 Hornady A-Tip 250gr": [0.308, 250, 0.442, 45.2, "G7"],
+
+    # .338
     ".338 Lapua Scenar 250gr": [0.338, 250, 0.322, 39.5, "G7"],
     ".338 Lapua Scenar 300gr": [0.338, 300, 0.368, 45.3, "G7"],
     ".338 Hornady ELD-M 285gr": [0.338, 285, 0.400, 43.8, "G7"],
+    
+    # .50 BMG
     ".510 Hornady A-MAX 750gr": [0.510, 750, 0.512, 69.5, "G7"]
 }
 
@@ -36,75 +48,365 @@ BULLET_DB = {
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-        .stApp { background-color: #0e0e0e; font-family: 'Roboto Mono', monospace; color: #e0e0e0; }
-        
-        .header-title { font-size: 1.4rem; font-weight: bold; color: #00ff41; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;}
-        
-        .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .hud-card { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 10px; text-align: center; }
-        .hud-label { color: #666; font-size: 0.7rem; text-transform: uppercase; }
-        .hud-value { color: #fff; font-size: 1.5rem; font-weight: 700; }
-        .hud-sub { color: #00ff41; font-size: 0.75rem; }
-        
-        .stTabs [data-baseweb="tab-list"] { gap: 4px; }
-        .stTabs [data-baseweb="tab"] { height: 40px; padding: 0 15px; background-color: #1a1a1a; color: #aaa; border-radius: 4px 4px 0 0; font-size: 0.8rem; border: none;}
+        .stApp { background-color: #050505; font-family: 'Roboto Mono', monospace; color: #e0e0e0; }
+
+        .header-container { 
+            border-bottom: 2px solid #00ff41; padding: 10px 0; margin-bottom: 15px; 
+            display: flex; align-items: center; justify_content: center; gap: 10px;
+        }
+        .header-title { font-size: 1.2rem; font-weight: bold; color: #fff; }
+
+        .hud-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px;
+        }
+        .hud-card { 
+            background: #111; border: 1px solid #333; border-top: 3px solid #00ff41; 
+            border-radius: 8px; padding: 10px; text-align: center; 
+        }
+        .hud-label { color: #888; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 2px; }
+        .hud-value { color: #fff; font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
+        .hud-sub { color: #00ff41; font-size: 0.7rem; }
+
+        .stTabs [data-baseweb="tab-list"] { gap: 5px; }
+        .stTabs [data-baseweb="tab"] { height: 45px; padding: 0 10px; background-color: #111; color: #fff; border-radius: 4px; font-size: 0.8rem;}
         .stTabs [aria-selected="true"] { background-color: #00ff41 !important; color: #000 !important; font-weight: bold;}
-        
-        .stButton>button { border-radius: 4px; font-weight: bold; }
-        input[type=number] { color: #00ff41 !important; }
+
+        .block-container { padding-top: 1rem; padding-bottom: 5rem; }
+        header {visibility: hidden;} footer {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. ENGINE CORE (PROFESSIONAL GRADE) ---
 
-# Стандартна таблиця G7 (Ballistic Research Lab) - High Resolution
-# Format: [Mach, Cd]
-G7_STANDARD = np.array([
-    [0.0, 0.262], [0.2, 0.262], [0.4, 0.262], [0.6, 0.262], [0.7, 0.265], 
-    [0.8, 0.273], [0.85, 0.286], [0.9, 0.306], [0.925, 0.324], [0.95, 0.354],
-    [0.975, 0.384], [1.0, 0.424], [1.025, 0.438], [1.05, 0.443], [1.075, 0.440],
-    [1.1, 0.433], [1.15, 0.415], [1.2, 0.399], [1.3, 0.377], [1.4, 0.360],
-    [1.5, 0.347], [1.6, 0.336], [1.7, 0.327], [1.8, 0.319], [1.9, 0.312],
-    [2.0, 0.306], [2.2, 0.295], [2.5, 0.282], [3.0, 0.266], [4.0, 0.246], [5.0, 0.232]
+# --- 4. ENGINE RK4 (G7 + LITZ PHYSICS) ---
+
+G7_TABLE = np.array([
+    [0.0, 0.262], [0.5, 0.262], [0.7, 0.265], [0.8, 0.270], 
+    [0.9, 0.300], [0.95, 0.365], [1.0, 0.425], [1.05, 0.445], 
+    [1.1, 0.430], [1.2, 0.395], [1.3, 0.375], [1.5, 0.335], 
+    [1.8, 0.305], [2.0, 0.290], [2.5, 0.265], [3.0, 0.250], [4.0, 0.230], [5.0, 0.220]
 ])
 
 def get_drag_coefficient_g7(mach):
-    # Лінійна інтерполяція по розширеній таблиці
-    if mach > 5.0: return 0.232
-    return np.interp(mach, G7_STANDARD[:, 0], G7_STANDARD[:, 1])
+    return np.interp(mach, G7_TABLE[:, 0], G7_TABLE[:, 1])
 
-def get_atmosphere(temp_c, pressure_hpa, humid_pct):
-    # Magnus Formula for Saturation Vapor Pressure
-    tk = temp_c + 273.15
-    svp = 6.112 * math.exp((17.67 * temp_c) / (temp_c + 243.5)) # hPa
-    pv = svp * (humid_pct / 100.0)
+def get_derivatives(state, p):
+    _, _, _, vx, vy, vz = state
+    G, OMEGA_E = 9.80665, 7.292115e-5
     
-    # Щільність вологого повітря (CIPM-2007 approximation)
-    pd_pa = (pressure_hpa - pv) * 100
-    pv_pa = pv * 100
-    Rd = 287.058
-    Rv = 461.495
-    rho = (pd_pa / (Rd * tk)) + (pv_pa / (Rv * tk))
+    # Wind vector relative
+    v_rel_x = vx + p['w_long']
+    v_rel_y = vy 
+    v_rel_z = vz + p['w_cross']
     
-    # Швидкість звуку (залежить від T та вологості через коеф. адіабати, спрощено через T)
-    c_speed = 20.05 * math.sqrt(tk) 
+    v_total_rel = math.sqrt(v_rel_x ** 2 + v_rel_y ** 2 + v_rel_z ** 2)
+    mach = v_total_rel / p['c_speed']
     
-    return rho, c_speed
+    # G7 Drag
+    cd = get_drag_coefficient_g7(mach) if p['model'] == "G7" else 0.45
+    accel_drag = (0.5 * p['rho_rel'] * v_total_rel ** 2 * cd * (1.0 / p['bc_eff'])) * 0.00105
+    
+    # Coriolis
+    cor_y = 2 * OMEGA_E * vx * math.cos(p['lat_rad']) * math.sin(p['az_rad'])
+    cor_z = 2 * OMEGA_E * (vy * math.cos(p['lat_rad']) * math.cos(p['az_rad']) - vx * math.sin(p['lat_rad']))
+    
+    dvx = -(accel_drag * (v_rel_x / v_total_rel))
+    dvy = -(accel_drag * (v_rel_y / v_total_rel)) - G + cor_y
+    dvz = -(accel_drag * (v_rel_z / v_total_rel)) + cor_z
+    
+    return np.array([vx, vy, vz, dvx, dvy, dvz])
 
-def get_derivatives(state, p_phys):
-    # State: [x, y, z, vx, vy, vz]
-    vx, vy, vz = state[3], state[4], state[5]
+
+def run_simulation(p):
+    DT = 0.001 
     
-    # Вектор швидкості відносно вітру (Relative Air Velocity)
-    # Вітер задається в глобальній системі, тому віднімаємо його від швидкості кулі
-    v_air_x = vx - p_phys['w_vec'][0]
-    v_air_y = vy # Вітер вертикальний ігноруємо (хоча він є, але зазвичай 0)
-    v_air_z = vz - p_phys['w_vec'][2]
+    # --- PHYSICAL SETUP ---
+    v0_eff = p['v0'] + (p['temp'] - 15.0) * p['temp_sens']
+    bc_eff = p['bc']
     
-    v_total_rel = math.sqrt(v_air_x**2 + v_air_y**2 + v_air_z**2)
+    # Atmosphere
+    tk = p['temp'] + 273.15
+    svp = 6.112 * math.exp((17.67 * p['temp']) / (p['temp'] + 243.5))
+    pv = svp * (p['humid'] / 100.0)
+    rho = ((p['pressure'] - pv) * 100 / (287.05 * tk)) + (pv * 100 / (461.5 * tk))
     
-    # Mach Number
-    mach = v_total_rel / p_phys['c_speed']
+    p_phys = {
+        'rho_rel': rho / 1.225, 'c_speed': 331.3 * math.sqrt(tk / 273.15),
+        'bc_eff': bc_eff, 'model': p['model'],
+        'lat_rad': math.radians(p['latitude']), 'az_rad': math.radians(p['azimuth']),
+        'w_long': p['w_speed'] * math.cos(math.radians(p['w_dir'] * 30)),
+        'w_cross': p['w_speed'] * math.sin(math.radians(p['w_dir'] * 30))
+    }
+    
+    # --- MILLER STABILITY (CORRECT FORMULA) ---
+    # Sg = (30 * m) / (T^2 * d^3 * L(1+L^2))
+    # m in grains, T in calibers, d in inches, L in calibers
+    twist_in_calibers = p['twist'] / p['caliber']
+    length_in_calibers = (p['length_mm'] / 25.4) / p['caliber']
+    
+    # Miller Formula
+    s_g = (30 * p['weight_gr']) / (
+        (twist_in_calibers ** 2) * (p['caliber'] ** 3) * length_in_calibers * (1 + length_in_calibers ** 2)
+    )
+    # Miller correction for Velocity and Atmopshere (Simplified)
+    # Sg increases slightly as velocity drops, but for drift we use Muzzle Sg or average.
+    # We will use Sg_static for Litz formula as base.
+
+    t_dir = 1 if p['twist_dir'] == "Right" else -1
+
+    # --- AERODYNAMIC JUMP FACTOR ---
+    # Litz rule of thumb: ~0.03-0.04 MRAD per 1 m/s crosswind.
+    # Physics: Jump is angular offset caused by yaw at muzzle.
+    # It depends on Sg. Higher Sg -> Less Jump.
+    # Approximation: Jump_mrad = (0.05 / Sg) * W_cross_ms
+    jump_mrad_per_ms = 0.055 / s_g if s_g > 0 else 0.03
+    aero_jump_angle = p_phys['w_cross'] * jump_mrad_per_ms * 0.001 * t_dir # radians
+
+    # --- ZEROING ---
+    angle_zero = math.atan((0.5 * 9.80665 * (p['zero_dist'] / v0_eff) ** 2 + p['sh'] / 100) / p['zero_dist'])
+    
+    # Add Aero Jump to initial Vertical Angle (Since it happens at muzzle)
+    # If Wind from Right (w_cross > 0) and Twist Right (t_dir=1) -> Jump UP.
+    state = np.array([0.0, -p['sh'] / 100, 0.0, 
+                      v0_eff * math.cos(angle_zero + aero_jump_angle), 
+                      v0_eff * math.sin(angle_zero + aero_jump_angle), 
+                      0.0])
+    
+    t, dist, results, step_check = 0.0, 0.0, [], 0
+
+    while dist <= p['max_dist'] + 5:
+        k1 = get_derivatives(state, p_phys)
+        k2 = get_derivatives(state + k1 * DT / 2, p_phys)
+        k3 = get_derivatives(state + k2 * DT / 2, p_phys)
+        k4 = get_derivatives(state + k3 * DT, p_phys)
+        state += (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6
+        t += DT
+        dist = state[0]
+
+        if dist >= step_check:
+            v_curr = math.sqrt(state[3] ** 2 + state[4] ** 2 + state[5] ** 2)
+            
+            # --- LITZ SPIN DRIFT FORMULA ---
+            # Drift (inches) = 1.25 * (Sg + 1.2) * t^1.83
+            # t = time of flight
+            drift_inches = 1.25 * (s_g + 1.2) * (t ** 1.83)
+            s_drift_m = (drift_inches * 0.0254) * t_dir
+            
+            # Position Y (Vertical), Z (Horizontal)
+            # state[1] is already affected by Aero Jump via initial velocity vector
+            y_f = state[1] 
+            z_f = state[2] + s_drift_m # Add spin drift to Coriolis/Wind drift
+            
+            mv, mh = (y_f * 100) / (dist / 10) if dist > 0 else 0, (z_f * 100) / (dist / 10) if dist > 0 else 0
+            
+            results.append({"Dist": int(dist), "V": int(v_curr), "Mach": round(v_curr / p_phys['c_speed'], 2),
+                            "Drop": y_f * 100, "MRAD_V": mv, "MRAD_H": mh, "Sg": round(s_g, 2)})
+            step_check += 25
+            
+    return pd.DataFrame(results)
+
+
+# --- 5. SOLVER TRUING ---
+def solve_truing(target_dist, real_drop, var_name, current_params, unit):
+    p_copy = current_params.copy()
+    p_copy['max_dist'] = target_dist + 10
+    current_val = p_copy[var_name]
+    min_val, max_val = current_val * 0.7, current_val * 1.3
+    real_drop_mrad = real_drop / 3.4377 if "MOA" in unit else real_drop
+
+    for _ in range(12):
+        mid_val = (min_val + max_val) / 2
+        p_copy[var_name] = mid_val
+        df = run_simulation(p_copy)
+        idx = (df['Dist'] - target_dist).abs().idxmin()
+        val = df.loc[idx, 'MRAD_V']
+        if val < real_drop_mrad:
+            max_val = mid_val
+        else:
+            min_val = mid_val
+    return mid_val
+
+
+# --- 6. VISUALS (RETICLE) ---
+def draw_reticle_mobile(mrad_v, mrad_h, unit, reticle_type, wez=None):
+    limit = 12 if "MRAD" in unit else 40
+    fig = go.Figure()
+
+    if wez:
+        fig.add_trace(go.Scatter(x=[-wez['h_min'], -wez['h_max'], -wez['h_max'], -wez['h_min']],
+                                 y=[wez['v_min'], wez['v_min'], wez['v_max'], wez['v_max']],
+                                 fill="toself", fillcolor="rgba(255, 50, 50, 0.25)", line=dict(width=0), name="WEZ"))
+
+    line_color = "rgba(255,255,255,0.3)"
+    
+    if reticle_type == "Crosshair (Перехрестя)":
+        fig.add_shape(type="line", x0=-limit, y0=0, x1=limit, y1=0, line=dict(color=line_color, width=1))
+        fig.add_shape(type="line", x0=0, y0=-limit, x1=0, y1=limit, line=dict(color=line_color, width=1))
+
+    elif reticle_type == "Mil-Dot (Класика)":
+        fig.add_shape(type="line", x0=-limit, y0=0, x1=limit, y1=0, line=dict(color=line_color, width=1))
+        fig.add_shape(type="line", x0=0, y0=-limit, x1=0, y1=limit, line=dict(color=line_color, width=1))
+        dots_x, dots_y = [], []
+        dot_step = 1 if "MRAD" in unit else 2
+        for i in range(-limit, limit + 1, dot_step):
+            if i != 0:
+                dots_x.extend([i, 0]); dots_y.extend([0, i])
+        fig.add_trace(go.Scatter(x=dots_x, y=dots_y, mode='markers', marker=dict(color='rgba(255,255,255,0.6)', size=3), hoverinfo='skip'))
+
+    elif reticle_type == "Christmas Tree (Ялинка)":
+        fig.add_shape(type="line", x0=-limit, y0=0, x1=limit, y1=0, line=dict(color=line_color, width=1))
+        fig.add_shape(type="line", x0=0, y0=-limit, x1=0, y1=limit, line=dict(color=line_color, width=1))
+        tree_x, tree_y = [], []
+        for i in range(1, limit):
+            fig.add_shape(type="line", x0=-0.15, y0=-i, x1=0.15, y1=-i, line=dict(color=line_color, width=1))
+            width = i + 1
+            for w in range(1, width):
+                if w % 1 == 0: 
+                    tree_x.extend([w, -w]); tree_y.extend([-i, -i])
+        fig.add_trace(go.Scatter(x=tree_x, y=tree_y, mode='markers', marker=dict(color='rgba(255,255,255,0.4)', size=2), hoverinfo='skip'))
+
+    fig.add_trace(go.Scatter(x=[-mrad_h], y=[mrad_v], mode='markers',
+                             marker=dict(color='#00ff41', size=16, symbol='circle-open', line=dict(width=3)),
+                             name="POI"))
+
+    fig.update_layout(template="plotly_dark", height=320, margin=dict(l=5, r=5, t=5, b=5),
+                      xaxis=dict(range=[-limit, limit], showgrid=False, zeroline=False, showticklabels=False, fixedrange=True),
+                      yaxis=dict(range=[-limit, limit], showgrid=False, zeroline=False, showticklabels=False, fixedrange=True),
+                      paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(20,20,20,0.8)', showlegend=False)
+    return fig
+
+
+# --- 7. UI STRUCTURE ---
+st.markdown(
+    '<div class="header-container"><div style="font-size:1.5rem;">🦅</div><div class="header-title">Magelan242 LITZ V6.5</div></div>',
+    unsafe_allow_html=True)
+
+t_calc, t_env, t_gun, t_wez, t_true = st.tabs(["🚀 ОБЧИСЛЕННЯ", "🌍 СЕРЕДОВИЩЕ", "🔫 ЗБРОЯ", "📊 WEZ", "🔧 КАЛІБРУВАННЯ"])
+
+with t_env:
+    c1, c2 = st.columns(2)
+    temp = c1.number_input("T (°C)", -30, 50, 15)
+    press = c2.number_input("P (hPa)", 800, 1150, 1013)
+    hum = st.slider("Hum (%)", 0, 100, 50)
+    st.markdown("---")
+    w_s = st.slider("Вітер (м/с)", 0.0, 15.0, 0.0, step=0.1)
+    w_d = st.slider("Напрям (год)", 1, 12, 12)
+    with st.expander("Гео-дані"):
+        lat = st.number_input("Широта", 0, 90, 50)
+        az = st.number_input("Азимут", 0, 360, 90)
+
+with t_gun:
+    bullet_choice = st.selectbox("База куль", list(BULLET_DB.keys()), index=8)
+    db = BULLET_DB[bullet_choice]
+    
+    c1, c2 = st.columns(2)
+    v0 = c1.number_input("V0 (м/с @ 15°C)", 500, 1200, 800)
+    weight = c2.number_input("Вага (gr)", 50, 800, db[1] if db else 175)
+    bc = c1.number_input("BC G7", 0.1, 1.0, db[2] if db else 0.243, format="%.3f")
+    cal = c2.number_input("Cal (дюйм)", 0.2, 0.51, db[0] if db else 0.308)
+    
+    # НОВЕ ПОЛЕ: ДОВЖИНА КУЛІ ДЛЯ ФОРМУЛИ МІЛЛЕРА/ЛІТЦА
+    st.markdown("---")
+    length = st.number_input("Довжина кулі (мм)", 10.0, 100.0, db[3] if db else 32.0, help="Критично важливо для розрахунку гіроскопічної стабільності (Sg) та деривації.")
+    temp_sens = st.number_input("Термозалежність (м/с на 1°C)", 0.0, 2.0, 0.5)
+    
+    with st.expander("Додатково (Твіст/Оптика)"):
+        twist = st.number_input("Твіст (дюйм)", 6.0, 16.0, 11.0)
+        sh = st.number_input("Висота прицілу (см)", 3.0, 10.0, 4.5)
+        zero = st.number_input("Нуль (м)", 50, 500, 100)
+
+with t_wez:
+    st.caption("Аналіз зони ймовірного влучання")
+    err_w = st.slider("Похибка вітру (+/- м/с)", 0.0, 4.0, 1.0)
+    err_v = st.slider("SD V0 (+/- м/с)", 0.0, 10.0, 2.0)
+
+with t_true:
+    st.caption("Truing")
+    tr_dist = st.number_input("Дистанція (м)", 300, 2000, 800)
+    tr_drop = st.number_input("Реальна поправка", 0.0, 50.0, 0.0)
+    calc_true = st.button("Підігнати V0")
+
+with t_calc:
+    c_dist, c_unit = st.columns([2, 1])
+    dist_target = c_dist.number_input("ДИСТАНЦІЯ (м)", 100, 3000, 800, step=25)
+    unit = c_unit.selectbox("Од.", ["MRAD", "MOA"])
+    ret_type = st.selectbox("Тип сітки", ["Crosshair (Перехрестя)", "Mil-Dot (Класика)", "Christmas Tree (Ялинка)"])
+
+    params = {
+        'v0': v0, 'bc': bc, 'model': "G7", 'weight_gr': weight,
+        'temp': temp, 'pressure': press, 'humid': hum, 'temp_sens': temp_sens,
+        'latitude': lat, 'azimuth': az,
+        'w_speed': w_s, 'w_dir': w_d,
+        'twist': twist, 'twist_dir': "Right",
+        'caliber': cal, 'zero_dist': zero,
+        'max_dist': dist_target, 'sh': sh,
+        'length_mm': length
+    }
+
+    if calc_true and tr_drop > 0:
+        new_v0 = solve_truing(tr_dist, tr_drop, 'v0', params, unit)
+        st.success(f"Розрахункова V0: {new_v0:.1f} м/с")
+
+    if st.button("🔥 РОЗРАХУВАТИ", type="primary", use_container_width=True):
+        try:
+            df = run_simulation(params)
+            res = df.iloc[-1]
+
+            # WEZ Logic
+            p_min = params.copy(); p_min.update({'w_speed': max(0, w_s - err_w), 'v0': v0 - err_v})
+            p_max = params.copy(); p_max.update({'w_speed': w_s + err_w, 'v0': v0 + err_v})
+            r_min = run_simulation(p_min).iloc[-1]
+            r_max = run_simulation(p_max).iloc[-1] # Simple approx endpoint
+            
+            wez = {
+                'v_min': min(r_min['MRAD_V'], r_max['MRAD_V']), 'v_max': max(r_min['MRAD_V'], r_max['MRAD_V']),
+                'h_min': min(r_min['MRAD_H'], r_max['MRAD_H']), 'h_max': max(r_min['MRAD_H'], r_max['MRAD_H'])
+            }
+
+            is_moa = unit == "MOA"
+            conv = 3.4377 if is_moa else 1.0
+            click_val = 0.25 if is_moa else 0.1
+            val_v, val_h = res['MRAD_V'] * conv, res['MRAD_H'] * conv
+
+            st.markdown(f"""
+                <div class="hud-grid">
+                    <div class="hud-card">
+                        <div class="hud-label">UP</div>
+                        <div class="hud-value" style="color:#ffcc00">{"U" if val_v > 0 else "D"} {abs(val_v):.2f}</div>
+                        <div class="hud-sub">{abs(val_v / click_val):.0f} кліків</div>
+                    </div>
+                    <div class="hud-card">
+                        <div class="hud-label">WIND</div>
+                        <div class="hud-value" style="color:#ffcc00">{"R" if val_h > 0 else "L"} {abs(val_h):.2f}</div>
+                        <div class="hud-sub">{abs(val_h / click_val):.0f} кліків</div>
+                    </div>
+                    <div class="hud-card"><div class="hud-label">Sg (Стаб.)</div><div class="hud-value">{res['Sg']}</div></div>
+                    <div class="hud-card"><div class="hud-label">Mach</div><div class="hud-value">{res['Mach']}</div></div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            t_ret, t_gr, t_tab = st.tabs(["СІТКА", "ТРАЄКТОРІЯ", "ТАБЛИЦЯ"])
+            
+            with t_ret:
+                wez_chart = wez.copy()
+                if is_moa:
+                    for k in wez_chart: wez_chart[k] *= 3.4377
+                st.plotly_chart(draw_reticle_mobile(val_v, val_h, unit, ret_type, wez_chart), use_container_width=True)
+
+            with t_gr:
+                final_drop = df['Drop'].iloc[-1]
+                slope = -final_drop / df['Dist'].iloc[-1] if df['Dist'].iloc[-1] > 0 else 0
+                y_comp = df['Drop'] + (df['Dist'] * slope)
+                fig_t = go.Figure()
+                fig_t.add_trace(go.Scatter(x=df['Dist'], y=y_comp, line=dict(color='#00ff41', width=3), fill='tozeroy'))
+                fig_t.update_layout(template="plotly_dark", height=300, margin=dict(l=0,r=0,t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(20,20,20,0.5)')
+                st.plotly_chart(fig_t, use_container_width=True)
+
+            with t_tab:
+                df_show = df[df['Dist'] % 50 == 0][['Dist', 'Drop', 'MRAD_V', 'MRAD_H', 'V', 'Sg']].copy()
+                st.dataframe(df_show, use_container_width=True, hide_index=True)
+
+        except Exception as e:
+            st.error(f"Error: {e}")
     
     # Drag Force (F = 0.5 * rho * v^2 * Cd * A)
     # Acceleration = F / m
